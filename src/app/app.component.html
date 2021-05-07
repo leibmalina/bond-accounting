@@ -1,0 +1,188 @@
+<div class="heading">
+  <h1>Bond Accounting</h1>
+  <p>built by leib</p>
+</div>
+
+<!-- Bond Input Form -->
+<div class="card card-container center">
+  <h4>Enter Bond Details Below:</h4>
+  <br>
+  <form name="form" (ngSubmit)="calculate()" #f="ngForm" novalidate>
+    <!-- Face Value Input Field -->
+    <div class="form-group">
+      <label for="faceValue">Face Value: </label>
+      <input
+        type="number"
+        name="faceValue"
+        [(ngModel)]="form.face_value"
+        required
+        (change) = "updateTable()"
+        #faceValue="ngModel"
+      />
+      <div
+        class="alert alert-danger"
+        role="alert"
+        *ngIf="faceValue.errors && f.submitted"
+      >
+        Face Value is required
+      </div>
+    </div>
+
+    <!-- Years to Maturity (Period Num) Input Field -->
+    <div class="form-group">
+      <label for="periodNum">Number of years to maturity: </label>
+      <input
+        type="number"
+        name="periodNum"
+        [(ngModel)]="form.period_num"
+        step="1"
+        (change) = "updateTable()"
+        required
+        #periodNum="ngModel"
+      />
+      <div
+        class="alert alert-danger"
+        role="alert"
+        *ngIf="periodNum.errors && f.submitted"
+      >
+        Years to Maturity is required
+      </div>
+    </div>
+
+    <!-- Martket Interest Rate Input Field -->
+    <div class="form-group">
+      <label for="interestRate">Annual market rate: </label>
+      <input
+        type="number"
+        name="interestRate"
+        [(ngModel)]="form.interest_rate"
+        required
+        (change) = "updateTable()"
+        #interestRate="ngModel"
+      />
+      <div
+        class="alert alert-danger"
+        role="alert"
+        *ngIf="interestRate.errors && f.submitted"
+      >
+        Annual market rate is required
+      </div>
+    </div>
+
+    <!-- Coupon Rate Input Field -->
+    <div class="form-group">
+      <label for="couponRate">Annual Coupon Rate: </label>
+      <input
+        type="number"
+        name="couponRate"
+        [(ngModel)]="form.coupon_rate"
+        required
+        (change) = "updateTable()"
+        #couponRate="ngModel"
+      />
+      <div
+        class="alert alert-danger"
+        role="alert"
+        *ngIf="couponRate.errors && f.submitted"
+      >
+        Coupon Rate is required
+      </div>
+    </div>
+
+    <!-- Periodicity Input Field -->
+    <div class="form-group">
+      <label for="periodicity"
+        >Periodicity of coupon payments in a year (semi-annual = 2, annual = 1,
+        etc.):</label
+      >
+      <input
+        type="number"
+        name="periodicity"
+        [(ngModel)]="form.period_frac"
+        required
+        step="1"
+        (change) = "updateTable()"
+        #periodicity="ngModel"
+      />
+      <div
+        class="alert alert-danger"
+        role="alert"
+        *ngIf="periodicity.errors && f.submitted"
+      >
+        Periodicity is required
+      </div>
+    </div>
+
+    <!-- Form Submit -->
+    <div class="form-group" *ngIf="true">
+      <button class="btn btn-primary btn-block">
+        Calculate
+      </button>
+    </div>
+  </form>
+
+</div>
+
+<!-- Calculated View -->
+  <div *ngIf="submitted" class="card card-contain-values">
+    <!-- Display Basic Values -->
+    <div>
+      <h4 class="center">Totals</h4><br>
+      <p><i>PV of Face Value: </i>&#36;{{formatNum(bond.pv_faceValue)}}</p>
+      <p><i>PV of Coupons: </i>&#36;{{formatNum(bond.pv_coupons)}}</p>
+      <p><i>Total Present Value of Bond: </i>&#36;{{formatNum(bond.pv_bondTotal)}}</p>
+      <br>
+      <!-- Relative to Market: -->
+      <p *ngIf="true">{{ bond.relativeText() }}</p>
+      
+    </div>
+    <br>
+  </div>
+  <!-- Display Ammortization Table -->
+  <div *ngIf="submitted" class="card card-contain-values">
+    <h4 class="center">Ammortization Table</h4><br>
+    <table>
+      <tr>
+        <th>Year</th>
+        <th>Dist</th>
+        <th>Beg Bal</th>
+        <th>Int Exp</th>
+        <th>Payment</th>
+        <th>Net</th>
+        <th>End Bal</th>
+      </tr>
+      <tr *ngFor="let row of bond.ammTable">
+        <td>{{yearCount}}</td>
+        <td>{{increment()}}</td>
+        <td>{{formatNum(row[0])}}</td>
+        <td>{{formatNum(row[1])}}</td>
+        <td>{{formatNum(row[2])}}</td>
+        <td>{{formatNum(row[3])}}</td>
+        <td>{{formatNum(row[4])}}</td>
+      </tr>
+    </table>
+    <br>
+  </div>
+  <!-- Display Journal Entries -->
+  <div *ngIf="submitted" class="card card-contain-values">   
+    <h4 class="center">Journal Entries</h4><br>
+    <div *ngIf="true">{{reset()}}</div>
+    <!-- Record issuance: -->
+    <p>Issuance:</p>
+    <p>Dr. Cash &emsp; {{formatNum(bond.pv_bondTotal)}}</p>
+    <p *ngIf="isGreater(form.face_value, bond.pv_bondTotal) && !isLess(form.face_value, bond.pv_bondTotal)">Dr. Discount &emsp; {{formatNum(form.face_value - bond.pv_bondTotal)}}</p>
+    <p *ngIf="!isGreater(form.face_value, bond.pv_bondTotal) && isLess(form.face_value, bond.pv_bondTotal)"><span class="credit"></span>Cr. Premium &emsp; {{formatNum(-1 * (form.face_value - bond.pv_bondTotal))}}</p>
+    <p><span class="credit"></span>Cr. Bond Payable &emsp; {{form.face_value}}</p>
+    <!-- Record JEs for each coupon payment -->
+    <div *ngFor="let payment of bond.ammTable">
+      <p><i>Year {{yearCount}}, Interest Payment {{increment()}}:</i></p>
+      <p>Dr. Int Exp &emsp; {{formatNum(payment[1])}}</p>
+      <p *ngIf="isGreater(payment[3],0) && !isLess(payment[3],0)">Dr. Discount &emsp; {{formatNum(payment[3])}}</p>
+      <p *ngIf="!isGreater(payment[3],0) && isLess(payment[3],0)"><span class="credit"></span>Cr. Premium &emsp; {{formatNum(-1 * payment[3])}}</p>
+      <p><span class="credit"></span>Cr. Cash &emsp; {{formatNum(payment[2])}}</p>
+    </div>
+    <!-- Record retirement at maturity -->
+    <p><i>Retirement at maturity:</i></p>
+    <p>Dr. Current Portion of LT Debt &emsp;  {{formatNum(form.face_value)}}</p>
+    <p><span class="credit"></span>Cr. Cash &emsp; {{formatNum(form.face_value)}}</p>
+  </div>
