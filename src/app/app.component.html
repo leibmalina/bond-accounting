@@ -177,8 +177,8 @@
     <div *ngFor="let payment of bond.ammTable">
       <p><i>Year {{yearCount}}, Interest Payment {{increment()}}:</i></p>
       <p>Dr. Int Exp &emsp; {{formatNum(payment[1])}}</p>
-      <p *ngIf="isGreater(payment[3],0) && !isLess(payment[3],0)">Dr. Discount &emsp; {{formatNum(payment[3])}}</p>
-      <p *ngIf="!isGreater(payment[3],0) && isLess(payment[3],0)"><span class="credit"></span>Cr. Premium &emsp; {{formatNum(-1 * payment[3])}}</p>
+      <p *ngIf="isGreater(payment[3],0) && !isLess(payment[3],0)">Cr. Discount &emsp; {{formatNum(payment[3])}}</p>
+      <p *ngIf="!isGreater(payment[3],0) && isLess(payment[3],0)"><span class="debit"></span>Dr. Premium &emsp; {{formatNum(-1 * payment[3])}}</p>
       <p><span class="credit"></span>Cr. Cash &emsp; {{formatNum(payment[2])}}</p>
     </div>
     <!-- Record retirement at maturity -->
